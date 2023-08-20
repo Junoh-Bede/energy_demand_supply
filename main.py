@@ -26,9 +26,23 @@ def calculate_demand_side(data, heat_storage=False, ef_h=1, ef_w=1, ef_c=1.3):
     return interim_df
 
 
-def optimize(data, fc_module):
+def optimize(data, fc_module, ef_h=1, ef_w=1, ef_c=1.3, ehp_h=2.7, ehp_w=2.7, ehp_c=3):
     data['fc_fuel'] = data['energy'].apply(fc_module.fuel_function)
     data['fc_heat'] = data['fc_fuel'].apply(fc_module.calculate_heat)
+    data['fc_ele'] = data['fc_fuel'].apply(fc_module.calculate_electricity)
+    heat_raw = data['heating'] / ef_h + data['hotwater'] / ef_w + data['cooling'] / ef_c
+    fc_heat_proportion_raw = data['fc_heat'] / heat_raw
+    fc_heat_proportion = fc_heat_proportion_raw.apply(lambda x: min([x, 1]))
+    ehp_heat_proportion = 1 - fc_heat_proportion
+    ehp_heating = ehp_heat_proportion * data['heating']
+    ehp_hotwater = ehp_heat_proportion * data['hotwater']
+    ehp_cooling = ehp_heat_proportion * data['cooling']
+    data['ehp_ele'] = ehp_heating / ehp_h + ehp_hotwater / ehp_w + ehp_cooling / ehp_c
+    ele_summary = data['ele'] + data['ehp_ele'] - data['fc_ele']
+    data['grid_ele'] = ele_summary.apply(lambda x: max([0, x]))
+    data['surplus_ele'] = ele_summary.apply(lambda x: -min([0, x]))
+    heat_summary = heat_raw - data['fc_heat']
+    data['surplus_heat'] = heat_summary.apply(lambda x: -min([0, x]))
     print(data)
     return data
 
