@@ -17,12 +17,12 @@ def calculate_demand_side(data, heat_storage=False, ef_h=1, ef_w=1, ef_c=1.3):
     interim_df['heating'] = data['Qhs_sys_kWh']
     interim_df['hotwater'] = data['Qww_sys_kWh']
     interim_df['cooling'] = data['Qcs_sys_kWh']
+    interim_df['heat_tot'] = interim_df['heating'] / ef_h + interim_df['hotwater'] / ef_w + interim_df['cooling'] / ef_c
     interim_df['doy'] = data['doy']
-    daily_min_energy = interim_df.groupby('doy').min()
+    daily_min_energy = interim_df.groupby('doy').min()[['ele', 'heat_tot']]
     interim_df = interim_df.merge(daily_min_energy, how='left', left_on=['doy'], right_index=True, suffixes=("", "_mn"))
     interim_df['energy'] = interim_df.apply(
-        lambda x: [x['ele_mn'],
-                   x['heating_mn'] / ef_h + x['hotwater_mn'] / ef_w + x['cooling_mn'] / ef_c], axis=1)
+        lambda x: [x['ele_mn'], x['heat_tot_mn']], axis=1)
     return interim_df
 
 
@@ -44,13 +44,15 @@ def optimize(data, fc_module, ef_h=1, ef_w=1, ef_c=1.3, ehp_h=2.7, ehp_w=2.7, eh
     heat_summary = heat_raw - data['fc_heat']
     data['surplus_heat'] = heat_summary.apply(lambda x: -min([0, x]))
     print(data)
-    return data
+    return data[['ele', 'ehp_ele', 'heating', 'hotwater', 'cooling', 'fc_fuel', 'fc_ele', 'fc_heat',
+                 'grid_ele', 'surplus_ele', 'surplus_heat']]
 
 
 def main(data_path, c_e=0.49, c_h=0.36):
     basic_data = pd.read_csv(data_path)
     interim_data = calculate_demand_side(basic_data)
-    optimize(interim_data, FC(c_e, c_h, 0))
+    result = optimize(interim_data, FC(c_e, c_h, 2))
+    result.to_csv("result_sample.csv")
 
 
 if __name__ == "__main__":
