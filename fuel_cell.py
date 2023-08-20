@@ -1,9 +1,10 @@
 
 class FC:
-    def __init__(self, c_e, c_h, operation):
+    def __init__(self, c_e, c_h, operation, capacity):
         self.c_e = c_e
         self.c_h = c_h
         self.operation = operation
+        self.capacity = capacity
 
     def calculate_heat(self, fuel):
         return self.c_h * fuel
@@ -13,11 +14,11 @@ class FC:
 
     def heat_based_fuel(self, energy):
         heat = energy[1]
-        return heat / self.c_h
+        return min([heat / self.c_h, self.capacity / self.c_e])
 
     def ele_based_fuel(self, energy):
         ele = energy[0]
-        return ele / self.c_e
+        return min([ele / self.c_e, self.capacity / self.c_e])
 
     def min_based_fuel(self, energy):
         return min([self.heat_based_fuel(energy), self.ele_based_fuel(energy)])

@@ -19,6 +19,7 @@ def calculate_demand_side(data, heat_storage=False, ef_h=1, ef_w=1, ef_c=1.3):
         data = data.merge(grouped, how='left', left_on=['doy'], right_index=True, suffixes=("_x", ""))
         data.drop(['Qhs_sys_kWh_x', 'Qww_sys_kWh_x', 'Qcs_sys_kWh_x'], inplace=True, axis=1)
     interim_df = pd.DataFrame()
+    interim_df['Date'] = data['Date']
     interim_df['ele'] = data['Eal_kWh'] + data['Ev_kWh'] + data['Eve_kWh'] + data['Edata_kWh'] + data['Epro_kWh']
     interim_df['pv_ele'] = data['E_PV_gen_kWh']
     interim_df['heating'] = data['Qhs_sys_kWh']
@@ -62,7 +63,7 @@ def calculate_supply_side(data, fc_module, ef_h=1, ef_w=1, ef_c=1.3, ehp_h=2.7, 
     data['surplus_ele'] = ele_summary.apply(lambda x: -min([0, x]))
     heat_summary = heat_raw - data['fc_heat']
     data['surplus_heat'] = heat_summary.apply(lambda x: -min([0, x]))
-    return data[['ele', 'ehp_ele', 'heating', 'hotwater', 'cooling', 'fc_fuel', 'fc_ele', 'fc_heat',
+    return data[['Date', 'ele', 'ehp_ele', 'heating', 'hotwater', 'cooling', 'fc_fuel', 'fc_ele', 'fc_heat',
                  'grid_ele', 'pv_ele', 'surplus_ele', 'surplus_heat']]
 
 

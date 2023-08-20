@@ -1,13 +1,11 @@
-from match_demand_supply import calculate_demand_side, calculate_supply_side
-from fuel_cell import FC
+from optimize import optimize_model
 import pandas as pd
 
 
 def main():
     df = pd.read_csv("sample.csv")
-    demand_calculated = calculate_demand_side(df)
-    result = calculate_supply_side(demand_calculated, FC(0.45, 0.38, 2))
-    result.to_csv("result_sample.csv")
+    capacity_range = range(1, 5000)
+    optimize_model(df, capacity_range, 3).to_csv("/Users/junoh/Documents/04_gradschool/result.csv")
 
 
 if __name__ == "__main__":
